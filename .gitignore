@@ -17,8 +17,8 @@ build
 !.env.example
 
 # Generated configuration files (created by CLI setup)
-ui/src/lib/firebase-config.json
-server/.dev.vars
+#ui/src/lib/firebase-config.json
+#server/.dev.vars
 
 # Editor directories and files
 .vscode/*
@@ -46,8 +46,8 @@ coverage
 /cypress/screenshots/
 
 # Vite specific
-.vite
-*.timestamp-*.mjs
+#.vite
+#*.timestamp-*.mjs
 
 # TypeScript
 *.tsbuildinfo
