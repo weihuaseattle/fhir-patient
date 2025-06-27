@@ -12,8 +12,8 @@ build
 
 # Environment files
 *.local
-.env
-.env.*
+#.env
+#.env.*
 !.env.example
 
 # Generated configuration files (created by CLI setup)
