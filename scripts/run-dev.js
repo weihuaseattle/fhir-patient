@@ -47,7 +47,8 @@ function parseCliArgs() {
   const args = process.argv.slice(2);
   return {
     useWrangler: args.includes('--wrangler') || args.includes('--cloudflare'),
-    help: args.includes('--help') || args.includes('-h')
+    help: args.includes('--help') || args.includes('-h'),
+    withCallback: args.includes('--callback') || args.includes('--with-callback')
   };
 }
 
@@ -105,6 +106,7 @@ function showHelp() {
 Usage:
   npm run dev                    Start with Node.js server (default)
   npm run dev -- --wrangler     Start with Cloudflare Wrangler dev server
+  npm run dev -- --callback     Start with OAuth callback server included
   npm run dev -- --help         Show this help
 
 Features:
@@ -112,11 +114,13 @@ Features:
   ✅ Multiple instance support (run several volo-apps simultaneously)
   ✅ Smart production/local service detection
   ✅ Cloudflare Workers compatibility
+  ✅ Optional OAuth callback server integration
 
 Notes:
   • Automatically detects if you're using production or local services
   • When using --wrangler, embedded PostgreSQL is not available
   • For Cloudflare Workers, ensure DATABASE_URL points to a remote database
+  • Callback server runs on port 3000 by default
 `);
 }
 
@@ -125,7 +129,7 @@ function handleError(error, message = 'Failed to start services') {
   process.exit(1);
 }
 
-function showServiceInfo(availablePorts, useWrangler, config) {
+function showServiceInfo(availablePorts, useWrangler, config, cliArgs) {
   console.log('🎉 Your app is ready at:');
   console.log(`   Frontend:  \x1b[32mhttp://localhost:${availablePorts.frontend}\x1b[0m`);
   console.log(`   Backend:   http://localhost:${availablePorts.backend}`);
@@ -144,6 +148,10 @@ function showServiceInfo(availablePorts, useWrangler, config) {
     }
   } else {
     console.log(`   Database: Production database`);
+  }
+  
+  if (cliArgs.withCallback) {
+    console.log(`   OAuth Callback:  http://localhost:3000`);
   }
   
   if (useWrangler) {
@@ -167,6 +175,9 @@ function showServiceInfo(availablePorts, useWrangler, config) {
     }
     if (config.useLocalFirebase) {
       console.log('   • Using Firebase Auth emulator');
+    }
+    if (cliArgs.withCallback) {
+      console.log('   • OAuth callback server enabled');
     }
   }
   
@@ -266,6 +277,11 @@ async function startServices() {
     const frontendCmd = `"cd ui && pnpm run dev -- ${frontendArgs.join(' ')}"`;
     commands.push(frontendCmd);
 
+    // Add callback server if requested
+    if (cliArgs.withCallback) {
+      commands.push(`"cd ui && node callback-server.js"`);
+    }
+
     // Start loading animation
     const spinnerChars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
     let spinnerIndex = 0;
@@ -301,6 +317,12 @@ async function startServices() {
     serviceColors.push('magenta');
     serviceNames.push('frontend');
     serviceColors.push('green');
+    
+    // Add callback server if requested
+    if (cliArgs.withCallback) {
+      serviceNames.push('callback');
+      serviceColors.push('yellow');
+    }
 
 
 
@@ -335,7 +357,7 @@ async function startServices() {
           process.stdout.write(capturedOutput);
         }
         console.log('✅ All services are starting up...\n');
-        showServiceInfo(availablePorts, cliArgs.useWrangler, config);
+        showServiceInfo(availablePorts, cliArgs.useWrangler, config, cliArgs);
         startupComplete = true;
         // Switch to live output
         child.stdout.pipe(process.stdout);
@@ -384,7 +406,7 @@ async function startServices() {
               process.stdout.write(capturedOutput);
               
               console.log('✅ All services started successfully!\n');
-              showServiceInfo(availablePorts, cliArgs.useWrangler, config);
+              showServiceInfo(availablePorts, cliArgs.useWrangler, config, cliArgs);
               startupComplete = true;
               // Switch to live output for ongoing logs
               child.stdout.pipe(process.stdout);

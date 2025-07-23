@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/run-dev.js",
+    "dev:callback": "cd ui && node callback-server.js",
+    "dev:with-callback": "npx concurrently -c blue,green -n main,callback \"npm run dev\" \"npm run dev:callback\"",
+    "dev:with-callback-server": "npm run dev -- --callback",
+    "dev:all": "cd ui && node start-dev.js",
     "firebase:emulator": "firebase emulators:start --only auth --project demo-project --export-on-exit=./data/firebase-emulator --import=./data/firebase-emulator",
     "post-setup": "node scripts/post-setup.js",
     "connect:auth": "npx create-volo-app --connect --auth",
